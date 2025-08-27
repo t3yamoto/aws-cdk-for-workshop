@@ -803,4 +803,15 @@ describe('Topic', () => {
       });
     });
   });
+
+  test('throw error when displayName is too long', () => {
+    const app = new cdk.App();
+    const stack = new cdk.Stack();
+
+    expect(() => {
+      new sns.Topic(stack, 'MyTopic', {
+        displayName: 'a'.repeat(101),
+      });
+    }).toThrow(/displayName must be less than 100 characters, got 101/);
+  });
 });

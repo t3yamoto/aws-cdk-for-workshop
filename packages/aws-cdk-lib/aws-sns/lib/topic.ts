@@ -4,6 +4,7 @@ import { ITopic, TopicBase } from './topic-base';
 import { IRole } from '../../aws-iam';
 import { IKey } from '../../aws-kms';
 import { ArnFormat, Lazy, Names, Stack, Token } from '../../core';
+import { ValidationError } from 'jsonschema';
 
 /**
  * Properties for a new SNS topic
@@ -254,6 +255,10 @@ export class Topic extends TopicBase {
     super(scope, id, {
       physicalName: props.topicName,
     });
+
+    if (props.displayName && !Token.isUnresolved(props.displayName) && props.displayName.length > 100) {
+      throw new ValidationError(`displayName must be less than 100 characters, got ${props.displayName.length}`, this);
+    }
 
     this.enforceSSL = props.enforceSSL;
 
