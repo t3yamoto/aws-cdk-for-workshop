@@ -4,6 +4,7 @@ import { ITopic, TopicBase } from './topic-base';
 import { IRole } from '../../aws-iam';
 import { IKey } from '../../aws-kms';
 import { ArnFormat, Lazy, Names, Stack, Token } from '../../core';
+import { ValidationError } from 'jsonschema';
 
 /**
  * Properties for a new SNS topic
@@ -88,6 +89,15 @@ export interface TopicProps {
    * @default TracingConfig.PASS_THROUGH
    */
   readonly tracingConfig?: TracingConfig;
+
+  /**
+   * The display name to use for an Amazon SNS topic with SMS subscriptions.
+   *
+   * The display name must be maximum 100 characters long, including hyphens (-), underscores (_), spaces, and tabs.
+   *
+   * @default - no display name
+   */
+  readonly displayName?: string;
 }
 
 /**
@@ -246,6 +256,10 @@ export class Topic extends TopicBase {
       physicalName: props.topicName,
     });
 
+    if (props.displayName && !Token.isUnresolved(props.displayName) && props.displayName.length > 100) {
+      throw new ValidationError(`displayName must be less than 100 characters, got ${props.displayName.length}`, this);
+    }
+
     this.enforceSSL = props.enforceSSL;
 
     if (props.contentBasedDeduplication && !props.fifo) {
@@ -300,6 +314,7 @@ export class Topic extends TopicBase {
       signatureVersion: props.signatureVersion,
       deliveryStatusLogging: Lazy.any({ produce: () => this.renderLoggingConfigs() }, { omitEmptyArray: true }),
       tracingConfig: props.tracingConfig,
+      displayName: props.displayName,
     });
 
     this.topicArn = this.getResourceArnAttribute(resource.ref, {
